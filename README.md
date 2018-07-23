@@ -77,3 +77,55 @@ docker run -t -i centos /bin/bash
 ````
 
 # Working with the dockerfile
+
+````bash
+# build dockerfile
+docker build -t <tag> .
+docker run -d --name myguest2 -P centos
+
+# Building an Apache Image
+FROM httpd:2.4
+docker build -t my-apache2 .
+docker run -i -t my-apache2
+
+# Accessing Firefox from a Container
+# Container DISPLAY equals to $DISPLAY which is our shell display
+# Mounting volumes by doing -v /tmp/.X11-unix/tmp/.X11-unix
+docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/tmp/.X11-unix firefox
+# Exercise, run FUSIONWORKS
+
+# Building a WordPress Image
+md wordpress
+# delete docker image with a specific tag
+docker rmi debian:jessie
+````
+
+# Advanced Docker Volumes
+
+````bash
+# Building from Basic Volumes
+docker run -v /www --name="bobexample1" ubuntu:14.04 echo yo
+# check volumes status
+docker ps -a
+# insepect
+docker inspect bobexample1
+
+"Mounts": [
+{
+"Type": "volume",
+"Name": "13cda9177b13cadf2a9e901bfb7dc785d188f4ed68b933770293959a5d22c28d",
+"Source": "/var/lib/docker/volumes/13cda9177b13cadf2a9e901bfb7dc785d188f4ed68b933770293959a5d22c28d/_data",
+"Destination": "/www",
+"Driver": "local",
+"Mode": "",
+"RW": true,
+"Propagation": ""
+}
+],
+
+# create another volume
+docker run -v /host/logs:/container/logs --name="bobmamaexample" ubuntu:14.04 echo mama
+````
+
+
+
