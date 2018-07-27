@@ -53,6 +53,9 @@ docker rm $(docker ps -a -q)
 
 # delete all images
 docker rmi $(docker images -q)
+
+# remove all images which have none as the repository name
+docker rmi $(docker images | grep "^<none" | aek '{print $3}')
 ````
 
 # Managing Image Layers
@@ -125,7 +128,85 @@ docker inspect bobexample1
 
 # create another volume
 docker run -v /host/logs:/container/logs --name="bobmamaexample" ubuntu:14.04 echo mama
+
+# Dockerfile Volume keyword
+docker network inspect bridge
+docker-machine ls
+
+# rmove container and its associated volume
+docker rm -v <image>
+
+# Make volumes shared between multiple docker containers
+docker run -v <directory> --name=bobservice -d busybox
+# Use the volume that bobservice is using, bobservice doesn't even have to be running
+# because as bobservice stops running, they leave the volumes there until we actually delete them
+docker run -d -it -p 9144:9144 --volumes-from bobservice <image_name>
+# check Mount information
+docker inspect <docker_image>
 ````
 
+# Networking in Docker
 
+````bash
+docker network ls
+
+NETWORK ID          NAME                DRIVER              SCOPE
+04574865bb08        bridge              bridge              local
+3df75784e23f        host                host                local
+1b3d6679c229        none                null                local
+aa6ef014c7da        simple-network      bridge              local
+
+# by default it will create a bridge network
+docker network create simple-network
+# inspect simple-network
+docker network inspect simple-network
+# remove simple-network
+docker network rm simple-network
+# see all docker network commands
+docker network COMMAND
+# connect docker container to a network
+docker network connect <network> <docker image name>
+
+# Configure DNS
+docker run -itd --name=bobcontainer1 busybox
+# attach a container
+docker attach bobcontainer1
+# dettach a container
+CTRL+Q
+# see DNS configuration
+mount
+
+# Communication between two containers
+docker-machine ls
+docker run -itd --name=bobcontainer1 busybox
+docker run -itd --name=bobcontainer2 busybox
+docker network inspect bridge
+
+# when you start up a docker container, and you don't specifiy which machine or which network to go to, i will always go to the bridged network
+docker network create bob_network
+docker run -itd --name=newbobcontainer10 --net=bob_network busybox
+docker network inspect bob_network
+
+# Communication between containers and outside world
+docker ps
+[sc47@openet-2fd3d3b619-prov-vm grok_exporter]$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+5f9ed2d0b2ff        busybox             "sh"                3 minutes ago       Up 3 minutes                            newbobcontainer10
+d2744bff0a71        busybox             "sh"                4 minutes ago       Up 4 minutes                            bobcontainer2
+dd8e35b769a1        busybox             "sh"                5 minutes ago       Up 5 minutes                            bobcontainer1
+# look at PORTS column, it's empty, therefore they would not be able to communicate outside of the machine, but nothing from the outside of the machine or the container can talk to busybox unless container is running in the same network
+# boot2docker
+
+# Binding Docker Container Ports to the Host
+docker run -d -P # map any port from the machine to the container
+docker run -d -p 80:5000 training/webapp python app.py
+docker ps
+docker port <running instance name>
+docker-machine ip my-default-hendry
+
+# Using Pipework
+docker run -itd --name=newbobcontainer1 busybox
+docker run -itd --name=newbobcontainer2 --net=bob_network busybox
+# check github Pipework. to communicate between different containers
+````
 
