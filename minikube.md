@@ -51,3 +51,21 @@ curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME/proxy
 ````
 
 ## Explore Your App
+### Pods
+Pod is a Kubernetes abstraction that represents a group of one or more application containers(Docker or rkt), and some shared resources for those containers, e.g:
+* Shared storage, as Volumes
+* Networking, as a unique cluster IP address
+* Information about how to run each container, such as the container image version or specific ports to use
+Some notes:
+* A pod contains different application containers which are relatively tightly coupled.
+* Pods are the atomic unit on kubernetes platform, when we create a deployment on kubernetes, that deployment creates Pods with containers inside them(as opposed to creating containers directly.)
+### Nodes
+A Pod always runs on a Node where a Node is a worker machine[Node can be either a virtual or a physical machine, depending on the cluster]. Each Node is managed by the master, a node can have multiple pods, and the Kubernetes master automatically handles scheduling the pods across the Nodes in the cluster.
+Every Kubernetes Node runs at least:
+* Kubelet: a process responsible for communication between the kubernetes master and the node, it manages the pods and the containers running on a machine
+* A container runtime(Docker, rkt) responsible for pulling the container image from a registry, unpacking the container, and running the application.
+### Troubleshooting
+* kubectl get - list resources
+* kubectl describe - show detailed information about a resource
+* kubectl logs - print the logs from a container in a pod
+* kubectl exec - execute a command on a container in a pod
