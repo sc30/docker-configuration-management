@@ -48,6 +48,16 @@ curl http://localhost:8001/version
 export POD_NAME=$(kubectl get pods -o go-template --template '{{range.items}}{{.metadata.name}}{{"\n"}}{{end}}')
 echo Name of the Pod: $POD_NAME
 curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME/proxy
+
+# get logs
+kubectl logs [pod_name] -c [container_name_in_pod]
+
+# execute command on the container
+kubectl exec [pod_name] env
+# Only one container in the pod
+kubectl exec -it [pod_name] bash
+# Access one of the containers in the pod
+kubectl exec -it [pod_name] -c [container_name_in_pod] bash
 ````
 
 ## Explore Your App
@@ -69,3 +79,55 @@ Every Kubernetes Node runs at least:
 * kubectl describe - show detailed information about a resource
 * kubectl logs - print the logs from a container in a pod
 * kubectl exec - execute a command on a container in a pod
+
+## Expose Your App Publicly
+A service in Kubernetes is an abstraction which defines a logical set of Pods and a policy by which to access them. Services enable a loose coupling between dependent Pods. The set of Pods target by a service is usually determined by a LabelSelector.
+
+Each Pod has a unique IP address, but they are not exposed outside the cluster without a service. Service can be exposed in different ways by spcifying a type in thet ServiceSpec
+* ClusterIP(default): make the service only reachable from within the cluster
+* NodePort
+* LoadBalancer
+* ExternalName
+
+````bash
+# Step 1: Create a new service
+kubectl get pods
+kubectl get services
+
+kubectl expose deployment kubernetes-bootcamp --type=NodePort --port=8080
+kubectl describe services kubernetes-bootcamp
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+
+curl $(minikube ip):$NODE_PORT
+
+# Step 2: Using labels
+# The deployment automatically created a label for our pod, to view
+kubectl describe deployment
+# Labels: run=kubernetes-bootcamp
+# -l, --selector=
+kubectl get pods -l run=kubernetes-bootcamp
+kubectl get services -l run=kubernetes-bootcamp
+
+# Get Pod name
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAME
+# Apply a new label
+kubectl label pod $POD_NAME app=v1
+# A new label will be pinned to our Pod
+kubectl describe pods $POD_NAME
+kubectl get pod -l app=v1
+
+# Step 3: Deleting a service, Pod is still running
+kubectl delete service -l run=kubernetes-bootcamp
+# use our defined label seems not be able to delete service, below won't work
+kubectl delete service -l app=v1
+# Confirm that the service is gone:
+kubectl get services
+# Confirm that route is not exposed anymore
+curl $(minikube ip):$NODE_PORT
+# This proves that app is not reachable anymore from outside of the cluster. We can confirm that the app is still running with a curl inside the pod
+kubectl exec -ti $POD_NAME curl localhost:8080
+````
+
+## Scale Your App
